@@ -1,7 +1,10 @@
 package com.example.gitsearch.data.remote
 
+import com.example.gitsearch.data.model.RepoModel
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface GitApi {
@@ -20,14 +23,27 @@ interface GitApi {
         @Query("per_page") perPage: Int = 30
     ): SearchReposResponse
 
+    @GET("repos/{owner}/{repo}")
+    suspend fun getRepo(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): Repo
 
+    @GET("repos/{owner}/{repo}/contents/{path}")
+    suspend fun getRepoContents(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("path") path: String = ""
+    ): List<RepoContent>
 
+    @Serializable
     data class User(
         val login: String,
         @SerializedName("avatar_url") val avatarUrl: String,
         @SerializedName("html_url") val htmlUrl: String
     )
 
+    @Serializable
     data class Repo(
         val owner: User,
         val name: String,
@@ -39,6 +55,14 @@ interface GitApi {
         @SerializedName("created_at") val createdAt: String,
         @SerializedName("updated_at") val updatedAt: String,
         @SerializedName("html_url") val htmlUrl: String
+    )
+
+    @Serializable
+    data class RepoContent(
+        val name: String,
+        val path: String,
+        val type: String,
+        @SerializedName("html_url") val htmlUrl: String?
     )
 
     data class SearchUsersResponse(val items: List<User>)

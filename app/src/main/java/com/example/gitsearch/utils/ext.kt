@@ -1,32 +1,41 @@
 package com.example.gitsearch.utils
 
-import android.R.id.input
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation.NavController
-import com.example.gitsearch.App
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-val LENGTH_LONG = Toast.LENGTH_LONG
-val LENGTH_SHORT = Toast.LENGTH_SHORT
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 val LocalNavController =
     staticCompositionLocalOf<NavController> { throw IllegalStateException("No NavController found") }
 
+fun String.openUrl(context: Context) {
+    val url = when {
+        this.startsWith("http://") || this.startsWith("https://") -> this
+        this.startsWith("www.") -> "https://$this"
+        else -> "https://$this"
+    }
 
-//fun Any.toast(msg: Any?, duration: Int = LENGTH_SHORT) {
-//    Toast.makeText(
-//        App.Companion.appInstance,
-//        if (msg == null) this.toString() else msg.toString(),
-//        duration)
-//        .show()
-//}
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "Нет приложения для открытия ссылки", Toast.LENGTH_SHORT).show()
+    }
+}
 
 internal fun Context.findActivity(): ComponentActivity {
     var context = this
@@ -37,15 +46,24 @@ internal fun Context.findActivity(): ComponentActivity {
     throw IllegalStateException("Activity not found")
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+fun String.toReadableDate(): String {
+    val outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
+    return try {
+        val instant = try {
+            java.time.Instant.parse(this)
+        } catch (e: Exception) {
+            null
+        }
 
-//fun CoroutineScope.debounceLaunch(
-//    timeoutMs: Long = 500L,
-//    block: suspend CoroutineScope.() -> Unit
-//): Job {
-//    var job: Job? = null
-//    job?.cancel()
-//    return launch {
-//        delay(timeoutMs)
-//        block()
-//    }
-//}
+        if (instant != null) {
+            val zoned = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+            return zoned.format(outputFormatter)
+        }
+
+        val localDate = LocalDate.parse(this, DateTimeFormatter.ISO_LOCAL_DATE)
+        localDate.format(outputFormatter)
+    } catch (e: Exception) {
+        this
+    }
+}

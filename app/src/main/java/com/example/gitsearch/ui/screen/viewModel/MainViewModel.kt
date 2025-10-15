@@ -1,5 +1,6 @@
 package com.example.gitsearch.ui.screen.viewModel
 
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -7,12 +8,11 @@ import androidx.paging.cachedIn
 import com.example.gitsearch.data.model.SearchModel
 import com.example.gitsearch.data.remote.GitRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -22,12 +22,20 @@ class MainViewModel(
     private val _searchState = MutableStateFlow<SearchState>(SearchState.Empty)
     val searchState: StateFlow<SearchState> = _searchState.asStateFlow()
 
+    private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(mapOf())
+    val expandedStates = _expandedStates.asStateFlow()
+
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    val searchQuery = _searchQuery.asStateFlow()
 
     private val _searchResults = MutableStateFlow<PagingData<SearchModel>>(PagingData.empty())
-    val searchResults: StateFlow<PagingData<SearchModel>> = _searchResults.asStateFlow()
+    val searchResults = _searchResults.asStateFlow()
 
+    fun toggleExpanded(key: String, expanded: Boolean) {
+        _expandedStates.value = _expandedStates.value.toMutableMap().apply {
+            this[key] = expanded
+        }
+    }
 
     fun onQueryChanged(query: String) {
         _searchQuery.value = query
@@ -37,7 +45,6 @@ class MainViewModel(
 
     fun search(query: String = _searchQuery.value) {
         _searchQuery.value = query
-
         _searchState.value = SearchState.Loading
 
         viewModelScope.launch {

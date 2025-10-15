@@ -34,23 +34,6 @@ object AppColors {
         @Composable get() = MaterialTheme.colorScheme.error
     val success: Color
         @Composable get() = Color(0xFF4CAF50)
-
-
-    val divider: Color
-        @Composable get() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-
-    val yellowLight: Color
-        @Composable get() = if (isSystemInDarkTheme()) {
-            Color(0xFFFFF176)
-        } else {
-            Color(0xFFFFEB3B)
-        }
-    val yellowDark: Color
-        @Composable get() = if (isSystemInDarkTheme()) {
-            Color(0xFFFFA000)
-        } else {
-            Color(0xFFFFC107)
-        }
 }
 
 val YellowPrimary = Color(0xFFFFC107)

@@ -1,13 +1,17 @@
 package com.example.gitsearch.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
-import com.example.gitsearch.R
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -29,29 +33,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -67,15 +67,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.gitsearch.R
+import com.example.gitsearch.ui.theme.AppColors
+import com.example.gitsearch.utils.toReadableDate
 
 
 @Composable
 fun SearchAppBar(
     title: String,
+    needSearch: Boolean = true,
     onBackClick: (() -> Unit)? = null,
     onValueChange: ((String) -> Unit)? = null,
     onSearchClick: (() -> Unit)? = null,
@@ -85,16 +91,24 @@ fun SearchAppBar(
     var isSearching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
 
+    val transition = updateTransition(targetState = isSearching, label = "searchTransition")
+    val searchWidth by transition.animateDp(
+        label = "widthAnim",
+        transitionSpec = { tween(durationMillis = 350, easing = FastOutSlowInEasing) }
+    ) { expanded ->
+        if (expanded) 280.dp else 48.dp
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(64.dp),
         color = backgroundColor
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -112,88 +126,108 @@ fun SearchAppBar(
                 )
             }
 
-            AnimatedVisibility(
-                visible = isSearching,
-                enter = slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                exit = slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+            if (needSearch) {
+                Row(
+                    modifier = Modifier,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextField(
-                        value = query,
-                        onValueChange = {
-                            query = it
-                            onValueChange?.invoke(query)
-                        },
-                        placeholder = { Text("Поиск по GitHub...") },
-                        singleLine = true,
+                    AnimatedVisibility(!isSearching){
+                        Text(
+                            text = title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AppColors.textPrimary,
+                            textAlign = TextAlign.Start
+                        )
+                    }
+
+                    Spacer(Modifier.size(8.dp))
+
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp)),
-                        leadingIcon = {
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { query = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Clear",
-                                        tint = Color.White
-                                    )
-                                }
-                            }
-                        },
-                        trailingIcon = {
+                            .width(searchWidth)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(AppColors.background),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (isSearching) {
+                            TextField(
+                                value = query,
+                                onValueChange = {
+                                    query = it
+                                    onValueChange?.invoke(query)
+                                },
+                                placeholder = { Text("Поиск по GitHub...") },
+                                singleLine = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp)),
+                                leadingIcon = {
+                                    if (query.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            query = ""
+                                            onValueChange?.invoke(query)
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "",
+                                                tint = AppColors.textPrimary
+                                            )
+                                        }
+                                    }
+                                },
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            onSearchClick?.invoke()
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Search,
+                                            contentDescription = "",
+                                            tint = AppColors.textPrimary
+                                        )
+                                    }
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = AppColors.background,
+                                    unfocusedContainerColor = AppColors.background,
+                                    focusedTextColor = AppColors.textPrimary,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                )
+                            )
+                        } else {
                             IconButton(
-                                onClick = {
-                                    onSearchClick?.invoke()
-                                }
+                                modifier = Modifier
+                                    .align(Alignment.Center),
+                                onClick = { isSearching = true }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Search,
-                                    contentDescription = "Clear",
-                                    tint = Color.White
+                                    contentDescription = "",
+                                    tint = AppColors.textPrimary
                                 )
                             }
                         }
-                    )
+                    }
                 }
-            }
-
-            AnimatedVisibility(
-                visible = !isSearching,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
                 ) {
                     Text(
                         text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier,
+                        color = AppColors.textPrimary,
                         textAlign = TextAlign.Start
                     )
-
-                    IconButton(onClick = {
-                        isSearching = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = Color.White
-                        )
-                    }
                 }
             }
         }
@@ -201,14 +235,17 @@ fun SearchAppBar(
 }
 
 @Composable
-fun UserRow(user: UserModel, onClick: () -> Unit = {}) {
+fun UserRow(user: UserModel, onOpenClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable { onClick() },
+            .clickable { onOpenClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.surface
+        )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -227,27 +264,42 @@ fun UserRow(user: UserModel, onClick: () -> Unit = {}) {
             Text(
                 text = user.login,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                color = AppColors.textPrimary
             )
             Icon(
                 imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Перейти"
+                contentDescription = "",
+                tint = AppColors.accentPrimary
             )
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun RepoRow(repo: RepoModel) {
-    var expanded by remember { mutableStateOf(false) }
-
+fun RepoRow(
+    repo: RepoModel,
+    expanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onOpenClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable { expanded = !expanded },
+            .clickable { onExpandChange(!expanded) }
+            .animateContentSize(
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = FastOutSlowInEasing
+                )
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.surface
+        )
     ) {
         Column(
             Modifier
@@ -258,79 +310,171 @@ fun RepoRow(repo: RepoModel) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
+                    .clickable { onExpandChange(!expanded) }
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(repo.name, fontWeight = FontWeight.Bold)
                     if (!expanded) {
                         Text(
-                            "Подробнее",
+                            text = stringResource(R.string.more),
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = AppColors.accentPrimary
                         )
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${repo.stars}", fontSize = 12.sp)
+                Row(
+                    modifier = Modifier
+                        .background(
+                            color = AppColors.accentPrimary,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         Icons.Default.Star,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = AppColors.background,
                         modifier = Modifier.size(14.dp)
                     )
-                    Spacer(Modifier.width(4.dp))
-                    Text("${repo.watchers}", fontSize = 12.sp)
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = "${repo.stars}",
+                        fontSize = 12.sp,
+                        color = AppColors.background
+                    )
+                    Spacer(Modifier.width(6.dp))
+
                     Icon(
                         Icons.Default.AccountCircle,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = AppColors.background,
                         modifier = Modifier.size(14.dp)
                     )
-                    Spacer(Modifier.width(4.dp))
-                    Text("${repo.forks}", fontSize = 12.sp)
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = "${repo.watchers}",
+                        fontSize = 12.sp,
+                        color = AppColors.background
+                    )
+                    Spacer(Modifier.width(6.dp))
+
                     Icon(
-                        Icons.Default.Share,
+                        Icons.Default.Menu,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = AppColors.background,
                         modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = "${repo.forks}",
+                        fontSize = 12.sp,
+                        color = AppColors.background
                     )
                 }
-                Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Развернуть"
-                )
             }
 
             if (expanded) {
                 Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AsyncImage(
-                        model = repo.ownerAvatarUrl,
-                        contentDescription = "Avatar",
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Color.Gray, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onOpenClick()
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        AsyncImage(
+                            model = repo.ownerAvatarUrl,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, Color.Gray, CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
 
-                    Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(8.dp))
 
-                    Column {
-                        Text("Автор: ${repo.ownerLogin}", fontSize = 12.sp, color = Color.Gray)
-                        Text(
-                            "Создан: ${repo.createdAt.take(10)} | Обновлён: ${repo.updatedAt.take(10)}",
-                            fontSize = 12.sp, color = Color.Gray
+                        Column {
+                            Text(
+                                text = stringResource(R.string.author, repo.ownerLogin),
+                                fontSize = 12.sp,
+                                color = AppColors.textSecondary
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.created,
+                                    repo.createdAt.take(10).toReadableDate()
+                                ),
+                                fontSize = 12.sp,
+                                color = AppColors.textSecondary
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.updated,
+                                    repo.updatedAt.take(10).toReadableDate()
+                                ),
+                                fontSize = 12.sp,
+                                color = AppColors.textSecondary
+                            )
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "",
+                            tint = AppColors.accentPrimary
                         )
                     }
                 }
                 repo.description?.let {
                     Spacer(Modifier.height(4.dp))
-                    Text(it, fontSize = 13.sp)
+                    Text(
+                        text = stringResource(R.string.description, it),
+                        fontSize = 13.sp,
+                        color = AppColors.textPrimary
+                    )
                 }
-                Text(repo.htmlUrl, fontSize = 12.sp, color = Color.Blue)
             }
         }
+    }
+}
+
+@Composable
+fun StatItem(icon: ImageVector, count: Int, text: String) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = AppColors.accentPrimary
+            )
+            Text(
+                text = count.toString(),
+                color = AppColors.textPrimary,
+            )
+        }
+        Text(
+            text = text,
+            fontSize = 10.sp,
+            color = AppColors.textPrimary
+        )
     }
 }
 
