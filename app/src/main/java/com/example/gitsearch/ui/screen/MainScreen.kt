@@ -1,6 +1,8 @@
 package com.example.gitsearch.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +47,7 @@ import coil.compose.AsyncImage
 import com.example.gitsearch.data.model.RepoModel
 import com.example.gitsearch.data.model.UserModel
 import com.example.gitsearch.ui.RepoRow
+import com.example.gitsearch.ui.SearchAppBar
 import com.example.gitsearch.ui.ShimmerContainer
 import com.example.gitsearch.ui.UserRow
 import com.example.gitsearch.ui.screen.viewModel.MainViewModel
@@ -75,47 +78,15 @@ fun MainScreen(
                 .background(MaterialTheme.colorScheme.primary)
                 .padding(8.dp)
         ) {
-            if (searchActive) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { mainViewModel.onQueryChanged(it) },
-                        placeholder = { Text("Поиск на GitHub") },
-                        singleLine = true,
-                        trailingIcon = {
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                    mainViewModel.search()
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Search, contentDescription = "Поиск")
-                                }
-                            }
-                        },
-                    )
-                    IconButton(onClick = { searchActive = false }) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть")
-                    }
+            SearchAppBar(
+                title = "Git Search",
+                onSearchClick = {
+                    mainViewModel.search()
+                },
+                onValueChange = {
+                    mainViewModel.onQueryChanged(it)
                 }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "GitHub Search",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                    )
-                    IconButton(onClick = { searchActive = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "Поиск", tint = Color.White)
-                    }
-                }
-            }
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +103,7 @@ fun MainScreen(
                 }
                 is SearchState.Empty -> {
                     Text(
-                        "Ничего не найдено",
+                        "Здесь пока пусто",
                         modifier = Modifier.align(Alignment.Center),
                         color = Color.Gray
                     )
@@ -140,8 +111,12 @@ fun MainScreen(
                 is SearchState.Error -> {
                     val msg = (searchState as SearchState.Error).message
                     Text(
-                        "Ошибка: $msg",
-                        modifier = Modifier.align(Alignment.Center),
+                        text = "Повторить загрузку?\nОшибка: $msg",
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .clickable {
+                                mainViewModel.search()
+                            },
                         color = Color.Red
                     )
                 }

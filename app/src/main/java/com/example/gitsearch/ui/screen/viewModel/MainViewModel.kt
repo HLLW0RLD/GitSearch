@@ -6,7 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.example.gitsearch.data.model.SearchModel
 import com.example.gitsearch.data.remote.GitRepository
-import com.example.gitsearch.utils.LogUtils.debugLog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,20 +38,19 @@ class MainViewModel(
     fun search(query: String = _searchQuery.value) {
         _searchQuery.value = query
 
-        viewModelScope.launch {
-            _searchState.value = SearchState.Loading
-            debugLog("search() query = $query")
-            debugLog("search() _searchQuery = ${_searchQuery.value}")
+        _searchState.value = SearchState.Loading
 
+        viewModelScope.launch {
+            delay(700)
             repository.search(query)
-                .onEach { pagingData ->
-                    _searchResults.value = pagingData
-                    _searchState.value = SearchState.Success(query)
-                }
+                .cachedIn(viewModelScope)
                 .catch { e ->
                     _searchState.value = SearchState.Error(e.message ?: "Ошибка при загрузке данных")
                 }
-                .launchIn(viewModelScope)
+                .collect { pagingData ->
+                    _searchResults.value = pagingData
+                    _searchState.value = SearchState.Success(query)
+                }
         }
     }
 }

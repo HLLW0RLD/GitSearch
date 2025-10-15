@@ -15,6 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.gitsearch.ui.screen.Main
 import com.example.gitsearch.ui.screen.MainScreen
+import com.example.gitsearch.ui.screen.RepoDetails
+import com.example.gitsearch.ui.screen.RepoDetailsScreen
 import com.example.gitsearch.ui.screen.Screen
 import com.example.gitsearch.ui.screen.route
 import com.example.gitsearch.ui.screen.screenComposable
@@ -38,9 +40,8 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         startDestination = startRoute.route()
                     ) {
-//                    screenComposable<Login> { LoginScreen() }
                         screenComposable<Main> { MainScreen() }
-//                    screenComposable<RepoDetails> { RepoDetailsScreen(it) }
+                        screenComposable<RepoDetails> { RepoDetailsScreen() }
                     }
                 }
             }

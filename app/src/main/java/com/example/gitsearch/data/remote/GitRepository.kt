@@ -3,6 +3,7 @@ package com.example.gitsearch.data.remote
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.example.gitsearch.data.model.SearchModel
 import kotlinx.coroutines.flow.Flow
 
