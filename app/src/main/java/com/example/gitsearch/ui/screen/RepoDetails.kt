@@ -97,7 +97,7 @@ fun RepoDetailsScreen(
     Scaffold(
         topBar = {
             SearchAppBar(
-                title = repoState?.name ?: "Загрузка...",
+                title = repoState?.name ?: stringResource(R.string.load_title),
                 needSearch = false,
                 onBackClick = {
                     navController.popBackStack()
@@ -162,11 +162,17 @@ fun RepoDetailsScreen(
                 }
 
                 Text(
-                    text = "Создан: ${r.createdAt.toReadableDate()}",
+                    text = stringResource(
+                        R.string.created,
+                        r.createdAt.take(10).toReadableDate()
+                    ),
                     color = AppColors.textPrimary
                 )
                 Text(
-                    text = "Обновлён: ${r.updatedAt.toReadableDate()}",
+                    text = stringResource(
+                        R.string.updated,
+                        r.createdAt.take(10).toReadableDate()
+                    ),
                     color = AppColors.textPrimary
                 )
                 Spacer(Modifier.height(8.dp))
@@ -177,7 +183,7 @@ fun RepoDetailsScreen(
                             .clickable {
                                 repoDetailsViewModel.onBackPressed(ownerLogin, repoName)
                             },
-                        text = "назад",
+                        text = stringResource(R.string.back),
                         color = AppColors.accentPrimary
                     )
                 }

@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">GitSearch</string>
+    <string name="stars">Звезды</string>
+    <string name="forks">Форки</string>
+    <string name="watchers">Наблюдатели</string>
+    <string name="more">Подробнее</string>
+    <string name="author">Автор: %1$s</string>
+    <string name="created">Создан: %1$s</string>
+    <string name="updated">Обновлён: %1$s</string>
+    <string name="description">Описание:\n%1$s</string>
+    <string name="app_title">Git Search</string>
+    <string name="empty_screen_title">Здесь пока пусто</string>
+    <string name="error_screen_title">Повторить загрузку?\nОшибка: %1$s</string>
+    <string name="back">назад</string>
+    <string name="load_title">Загрузка...</string>
 </resources>
