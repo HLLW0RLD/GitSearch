@@ -48,13 +48,13 @@ class MainViewModel(
         _searchState.value = SearchState.Loading
 
         viewModelScope.launch {
-            delay(700)
             repository.search(query)
                 .cachedIn(viewModelScope)
                 .catch { e ->
                     _searchState.value = SearchState.Error(e.message ?: "Ошибка при загрузке данных")
                 }
                 .collect { pagingData ->
+                    delay(700)
                     _searchResults.value = pagingData
                     _searchState.value = SearchState.Success(query)
                 }
