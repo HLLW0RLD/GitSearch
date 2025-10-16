@@ -52,6 +52,7 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import coil.compose.AsyncImage
@@ -221,9 +222,9 @@ fun RepoDetailsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = when (item) {
-                                is RepoContentItem.Dir -> Icons.Default.ArrowDropDown
-                                is RepoContentItem.File -> Icons.Default.Done
+                            painter = when (item) {
+                                is RepoContentItem.Dir -> painterResource(R.drawable.folder)
+                                is RepoContentItem.File -> painterResource(R.drawable.file)
                             },
                             contentDescription = null,
                             tint = AppColors.accentPrimary
